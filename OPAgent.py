@@ -1,5 +1,5 @@
 import socket, threading, select, SocketServer, SimpleHTTPServer
-import platform, os, shutil, subprocess, urllib, ConfigParser
+import platform, os, shutil, subprocess, urllib, ConfigParser, time
 
 
 BUFLEN = 8192
@@ -103,6 +103,7 @@ class WebProxy():
         self.server = SocketServer.ThreadingTCPServer((host, port), handler)
         self.server.allow_reuse_address = True
         self.server.socket.setblocking(0)
+        #self.server.socket.settimeout(1)
         proxy_thread = threading.Thread(target=self.server.serve_forever)
         #proxy_thread.setDaemon(True)
         proxy_thread.start()
@@ -248,7 +249,7 @@ def mychrome():
             chrome = 'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe'
 
         cmd_chrome = [str(chrome), str(" --user-data-dir=" + userdata), str(" --proxy-pac-url=" + pacpath),
-                      str(" mail.ogilvy.com")]
+                      str(" email.ogilvy.com")]
 
     elif ostype == 'Darwin':
         userdata = os.environ['HOME'] + '/ogmail'
@@ -256,7 +257,7 @@ def mychrome():
         chrome = '/Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ Chrome'
         #chrome = 'open /Applications/Google\\ Chrome.app --args '
         cmd_chrome = str(chrome) + str(" --user-data-dir=" + userdata) + str(" --proxy-pac-url=" + pacpath) + str(
-            " mail.ogilvy.com")
+            " email.ogilvy.com")
 
     if os.path.isdir(userdata):
         shutil.rmtree(userdata)
@@ -274,17 +275,24 @@ if __name__ == '__main__':
     w=WebServer()
     p=WebProxy()
 
+    time.sleep(1)
     w.stop()
+    time.sleep(0.01)
     p.stop()
+    time.sleep(0.01)
 
     getdata()
+    time.sleep(0.01)
 
     w.start()
+    time.sleep(0.01)
     p.start()
+    time.sleep(0.1)
 
     c = mychrome()
 
     if c == 0:
         w.stop()
+        time.sleep(0.01)
         p.stop()
-    exit
+        time.sleep(0.01)
