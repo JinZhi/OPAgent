@@ -332,7 +332,6 @@
 203.208.46.204	maps.google.com.hk
 203.208.46.205	news.google.com.hk
 203.208.46.206	picasaweb.google.com.hk
-203.208.46.206	plus.url.google.com.hk
 203.208.46.207	scholar.google.com.hk
 203.208.46.201	toolbar.google.com.hk
 203.208.46.202	toolbarqueries.google.com.hk
@@ -365,12 +364,12 @@
 203.208.46.222	www.google-analytics.com
 203.208.46.201	www.googlelabs.com
 203.208.46.222	www.googlesource.com
-203.208.46.206	plus.google.com
-203.208.46.206	plus.url.google.com
-203.208.46.206	plusone.google.com
+173.194.126.128	plus.google.com
+173.194.126.128	plus.url.google.com
+173.194.126.128	plusone.google.com
+173.194.126.128	plus.url.google.com.hk
 173.194.64.141	www.panoramio.com
 # Section End: google(cn)
-
 # Section Start: google-apis(cn)
 203.208.46.210	0-open-opensocial.googleusercontent.com
 203.208.46.210	0-focus-opensocial.googleusercontent.com
@@ -503,7 +502,3 @@
 203.208.46.201	gmaps-samples-flash.googlecode.com
 203.208.46.201	google-code-feed-gadget.googlecode.com
 # Section End: google-apis(cn)
-
-# Section start: Ogilvy Gmail Hub
-83.221.37.118	collab.ogilvy.com
-# Section End: Ogilvy Gmail Hub
