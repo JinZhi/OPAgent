@@ -1,5 +1,16 @@
-import socket, threading, select, SocketServer, SimpleHTTPServer
-import platform, os, shutil, subprocess, urllib, ConfigParser, time
+import socket
+import threading
+import select
+import SocketServer
+import SimpleHTTPServer
+import platform
+import os
+import subprocess
+import urllib
+import ConfigParser
+import time
+import shutil
+import sys
 
 
 BUFLEN = 8192
@@ -12,7 +23,7 @@ class ConnectionHandler(SocketServer.BaseRequestHandler):
 
     def handle(self):
         self.client = self.request
-        
+
         self.client_buffer = ''
         self.timeout = 30
         self.method, self.path, self.protocol = self.get_base_header()
@@ -40,12 +51,12 @@ class ConnectionHandler(SocketServer.BaseRequestHandler):
         self.client.send(HTTPVER+' 200 Connection established\n'+
                          'Proxy-agent: %s\n\n'%VERSION)
         self.client_buffer = ''
-        self._read_write()        
+        self._read_write()
 
     def method_others(self):
         self.path = self.path[7:]
         i = self.path.find('/')
-        host = self.path[:i]        
+        host = self.path[:i]
         path = self.path[i:]
         self._connect_target(host)
         self.target.send('%s %s %s\n'%(self.method, path, self.protocol)+
@@ -89,14 +100,13 @@ class ConnectionHandler(SocketServer.BaseRequestHandler):
                 break
 
 
-
 class WebProxy():
     def __init__(self):
         self.server = None
 
 
     def start(self, host='127.0.0.1', port=9999, IPv6=False, timeout=60,
-                      handler=ConnectionHandler):
+              handler=ConnectionHandler):
 
         print "Start proxy server"
 
@@ -121,6 +131,7 @@ class WebServer():
 
     def start(self,host = '127.0.0.1', port=9000):
 
+        print "Start web server"
         handler = SimpleHTTPServer.SimpleHTTPRequestHandler
         self.server = SocketServer.TCPServer((host, port), handler)
         self.server.allow_reuse_address = True
@@ -131,6 +142,7 @@ class WebServer():
 
     def stop(self):
         if self.server is not None:
+            print "Stop web server"
             self.server.shutdown()
             self.server.server_close()
 
@@ -248,16 +260,14 @@ def mychrome():
         else:
             chrome = 'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe'
 
-        cmd_chrome = [str(chrome), str(" --user-data-dir=" + userdata), str(" --proxy-pac-url=" + pacpath),
-                      str(" email.ogilvy.com")]
+        cmd_chrome = [str(chrome), str(" --user-data-dir=" + userdata), str(" --proxy-pac-url=" + pacpath),str(" email.ogilvy.com")]
 
     elif ostype == 'Darwin':
         userdata = os.environ['HOME'] + '/ogmail'
 
         chrome = '/Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ Chrome'
         #chrome = 'open /Applications/Google\\ Chrome.app --args '
-        cmd_chrome = str(chrome) + str(" --user-data-dir=" + userdata) + str(" --proxy-pac-url=" + pacpath) + str(
-            " email.ogilvy.com")
+        cmd_chrome = str(chrome) + str(" --user-data-dir=" + userdata) + str(" --proxy-pac-url=" + pacpath) + str(" email.ogilvy.com")
 
     if os.path.isdir(userdata):
         shutil.rmtree(userdata)
@@ -272,27 +282,43 @@ def mychrome():
     return cmd
 
 if __name__ == '__main__':
-    w=WebServer()
-    p=WebProxy()
 
-    time.sleep(1)
-    w.stop()
-    time.sleep(0.01)
-    p.stop()
-    time.sleep(0.01)
+    ostype = platform.system()
+    osver = platform.win32_ver()[0]
 
-    getdata()
-    time.sleep(0.01)
+    if ostype == 'Windows':
+        if osver=='XP':
+            mydir = os.environ['USERPROFILE'] + '\\Local Settings\\Application Data\\OPAgent'
+        else:
+            mydir = os.environ['USERPROFILE'] + '\\AppData\\Local\\OPAgent'
 
-    w.start()
-    time.sleep(0.01)
-    p.start()
-    time.sleep(0.1)
+    elif ostype == 'Darwin':
+        mydir = os.environ['HOME'] + '/Library/Application Support/OPAgent'
 
-    c = mychrome()
+    if not os.path.isdir(mydir):
+        os.makedirs(mydir)
 
-    if c == 0:
+    try:
+        os.chdir(mydir)
+        w=WebServer()
+        p=WebProxy()
+        time.sleep(1)
         w.stop()
-        time.sleep(0.01)
+        time.sleep(0.1)
         p.stop()
-        time.sleep(0.01)
+        time.sleep(0.1)
+        getdata()
+        time.sleep(0.1)
+        w.start()
+        time.sleep(0.1)
+        p.start()
+        time.sleep(0.1)
+        c = mychrome()
+        if c == 0:
+            w.stop()
+            time.sleep(0.1)
+            p.stop()
+            time.sleep(0.1)
+            sys.exit(1)
+    except:
+        sys.exit(1)
