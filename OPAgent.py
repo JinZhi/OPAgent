@@ -1,3 +1,4 @@
+# -*- coding:  utf-8 -*-
 import socket
 import threading
 import select
@@ -12,10 +13,10 @@ import time
 import shutil
 import sys
 
-
 BUFLEN = 8192
 VERSION = 'Python Proxy'
 HTTPVER = 'HTTP/1.1'
+
 
 class ConnectionHandler(SocketServer.BaseRequestHandler):
     global BUFLEN
@@ -27,7 +28,7 @@ class ConnectionHandler(SocketServer.BaseRequestHandler):
         self.client_buffer = ''
         self.timeout = 30
         self.method, self.path, self.protocol = self.get_base_header()
-        if self.method=='CONNECT':
+        if self.method == 'CONNECT':
             self.method_CONNECT()
         elif self.method in ('OPTIONS', 'GET', 'HEAD', 'POST', 'PUT',
                              'DELETE', 'TRACE'):
@@ -41,15 +42,15 @@ class ConnectionHandler(SocketServer.BaseRequestHandler):
             end = self.client_buffer.find('\n')
             if end != -1:
                 break
-        print '%s'%self.client_buffer[:end]#debug
-        data = (self.client_buffer[:end+1]).split()
-        self.client_buffer = self.client_buffer[end+1:]
+        print '%s' % self.client_buffer[:end]#debug
+        data = (self.client_buffer[:end + 1]).split()
+        self.client_buffer = self.client_buffer[end + 1:]
         return data
 
     def method_CONNECT(self):
         self._connect_target(self.path)
-        self.client.send(HTTPVER+' 200 Connection established\n'+
-                         'Proxy-agent: %s\n\n'%VERSION)
+        self.client.send(HTTPVER + ' 200 Connection established\n' +
+                         'Proxy-agent: %s\n\n' % VERSION)
         self.client_buffer = ''
         self._read_write()
 
@@ -59,15 +60,15 @@ class ConnectionHandler(SocketServer.BaseRequestHandler):
         host = self.path[:i]
         path = self.path[i:]
         self._connect_target(host)
-        self.target.send('%s %s %s\n'%(self.method, path, self.protocol)+
+        self.target.send('%s %s %s\n' % (self.method, path, self.protocol) +
                          self.client_buffer)
         self.client_buffer = ''
         self._read_write()
 
     def _connect_target(self, host):
         i = host.find(':')
-        if i!=-1:
-            port = int(host[i+1:])
+        if i != -1:
+            port = int(host[i + 1:])
             host = host[:i]
         else:
             port = 80
@@ -78,7 +79,7 @@ class ConnectionHandler(SocketServer.BaseRequestHandler):
         self.target.connect(address)
 
     def _read_write(self):
-        time_out_max = self.timeout/3
+        time_out_max = self.timeout / 3
         socs = [self.client, self.target]
         count = 0
         while 1:
@@ -105,9 +106,8 @@ class WebProxy():
         self.server = None
 
 
-    def start(self, host='127.0.0.1', port=9999, IPv6=False, timeout=60,
+    def start(self, host='127.0.0.1', port=9999, IPv6=False, timeout=30,
               handler=ConnectionHandler):
-
         print "Start proxy server"
 
         self.server = SocketServer.ThreadingTCPServer((host, port), handler)
@@ -129,8 +129,7 @@ class WebServer():
     def __init__(self):
         self.server = None
 
-    def start(self,host = '127.0.0.1', port=9000):
-
+    def start(self, host='127.0.0.1', port=9000):
         print "Start web server"
         handler = SimpleHTTPServer.SimpleHTTPRequestHandler
         self.server = SocketServer.TCPServer((host, port), handler)
@@ -145,6 +144,7 @@ class WebServer():
             print "Stop web server"
             self.server.shutdown()
             self.server.server_close()
+
 
 def getdata():
     global host_dir
@@ -244,31 +244,41 @@ def getdata():
     file_object.write('}\n')
     file_object.close()
 
+
 def mychrome():
     ostype = platform.system()
     osarch = platform.architecture()[0]
+    osver = platform.win32_ver()[0]
 
     pacpath = 'http://localhost:9000/proxy.pac'
 
     if ostype == 'Windows':
         userdata = os.environ['USERPROFILE'] + '\\ogmail'
 
-        print pacpath
-
         if osarch == '32bit':
-            chrome = 'C:\Program Files\Google\Chrome\Application\chrome.exe'
+            chrome = os.environ["ProgramFiles"]+'\\Google\\Chrome\\Application\\chrome.exe'
         else:
-            chrome = 'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe'
+            chrome = os.environ["ProgramFiles(x86)"]+'\\Google\\Chrome\\Application\\chrome.exe'
 
-        cmd_chrome = [str(chrome), str(" --user-data-dir=" + userdata), str(" --proxy-pac-url=" + pacpath),str(" email.ogilvy.com")]
+        if not os.path.isfile(chrome):
+            if osver=='xp':
+                chrome = os.environ['USERPROFILE'] + '\\Local Settings\\Application Data\\Google\\Chrome\\Application\\chrome.exe'            
+            else:
+                chrome = os.environ['USERPROFILE'] + '\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe'
+            
+        cmd_chrome = [str(chrome), str(" --user-data-dir=" + userdata), str(" --proxy-pac-url=" + pacpath),
+                      str(" email.ogilvy.com")]
+        print chrome
+        print cmd_chrome
 
     elif ostype == 'Darwin':
         userdata = os.environ['HOME'] + '/ogmail'
 
         chrome = '/Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ Chrome'
         #chrome = 'open /Applications/Google\\ Chrome.app --args '
-        cmd_chrome = str(chrome) + str(" --user-data-dir=" + userdata) + str(" --proxy-pac-url=" + pacpath) + str(" email.ogilvy.com")
-
+        cmd_chrome = str(chrome) + str(" --user-data-dir=" + userdata) + str(" --proxy-pac-url=" + pacpath) + str(
+            " email.ogilvy.com")
+        
     if os.path.isdir(userdata):
         shutil.rmtree(userdata)
 
@@ -281,13 +291,14 @@ def mychrome():
 
     return cmd
 
+
 if __name__ == '__main__':
 
     ostype = platform.system()
     osver = platform.win32_ver()[0]
 
     if ostype == 'Windows':
-        if osver=='XP':
+        if osver == 'XP':
             mydir = os.environ['USERPROFILE'] + '\\Local Settings\\Application Data\\OPAgent'
         else:
             mydir = os.environ['USERPROFILE'] + '\\AppData\\Local\\OPAgent'
@@ -298,10 +309,10 @@ if __name__ == '__main__':
     if not os.path.isdir(mydir):
         os.makedirs(mydir)
 
+    os.chdir(mydir)
+    w = WebServer()
+    p = WebProxy()
     try:
-        os.chdir(mydir)
-        w=WebServer()
-        p=WebProxy()
         time.sleep(1)
         w.stop()
         time.sleep(0.1)
