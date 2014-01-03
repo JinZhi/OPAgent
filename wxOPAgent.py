@@ -12,6 +12,7 @@ import ConfigParser
 import shutil
 import cStringIO
 import zlib
+import time
 from wx import ImageFromStream, BitmapFromImage
 from wx import EmptyIcon
 
@@ -135,7 +136,6 @@ class WebServer():
         self.server = None
 
     def start(self, host='127.0.0.1', port=9000):
-        #mylog = "Start web server"
         print "Start web server"
         handler = SimpleHTTPServer.SimpleHTTPRequestHandler
         self.server = SocketServer.TCPServer((host, port), handler)
@@ -147,7 +147,6 @@ class WebServer():
 
     def stop(self):
         if self.server is not None:
-            #mylog = "Stop web server"
             print "Stop web server"
             self.server.shutdown()
             self.server.server_close()
@@ -340,9 +339,12 @@ class chrome_pro():
         self.pid = self.mycmd.pid
 
     def stop(self):
-        while self.pid != None:
-            self.pid = None
+        #while self.pid != None:
+        self.pid = None
+        try:
             self.mycmd.kill()
+        except:
+            pass
 
 
 mydir()
@@ -393,15 +395,18 @@ class MyTaskBarIcon(wx.TaskBarIcon):
         myicon = getIcon()
 
         self.SetIcon(myicon, 'OPAgent')
-        self.Bind(wx.EVT_MENU, self.OnTaskBarStart, id=1)
-        self.Bind(wx.EVT_MENU, self.OnTaskBarStop, id=2)
-        self.Bind(wx.EVT_MENU, self.OnTaskBarClose, id=3)
+        self.Bind(wx.EVT_MENU, self.FrameShow, id=1)
+        self.Bind(wx.EVT_MENU, self.OnTaskBarStart, id=2)
+        self.Bind(wx.EVT_MENU, self.OnTaskBarStop, id=3)
+        self.Bind(wx.EVT_MENU, self.OnTaskBarClose, id=4)
+        self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, self.FrameShow)
 
     def CreatePopupMenu(self):
         menu = wx.Menu()
-        menu.Append(1, 'Start')
-        menu.Append(2, 'Stop')
+        menu.Append(1, 'Main')
+        menu.Append(2, 'Open')
         menu.Append(3, 'Close')
+        menu.Append(4, 'Exit')
         return menu
 
     def OnTaskBarClose(self, event):
@@ -409,8 +414,14 @@ class MyTaskBarIcon(wx.TaskBarIcon):
         W.stop()
         c.stop()
         self.frame.Close()
+        self.frame.tskic.Destroy()
+        self.frame.Destroy()
 
     def OnTaskBarStart(self, event):
+        P.stop()
+        W.stop()
+        c.stop()
+        time.sleep(1)
         P.start()
         W.start()
         c.start()
@@ -420,23 +431,31 @@ class MyTaskBarIcon(wx.TaskBarIcon):
         W.stop()
         c.stop()
 
+    def FrameShow(self, event):
+        self.frame.Show()
+
 class MyFrame(wx.Frame):
     def __init__(self, parent, id, title):
         wx.Frame.__init__(self, parent, id, title, (-1, -1), (400, 300))
 
-        compute_btn = wx.Button(self, 1, 'Start', (30, 20))
+        compute_btn = wx.Button(self, 1, 'Open', (30, 20))
         compute_btn.SetFocus()
-        compute_btn = wx.Button(self, 2, 'Stop', (30, 50))
+        compute_btn = wx.Button(self, 2, 'Close', (30, 50))
         compute_btn.SetFocus()
 
         self.Bind(wx.EVT_BUTTON, self.OnStart, id=1)
         self.Bind(wx.EVT_BUTTON, self.OnStop, id=2)
+
 
         self.tskic = MyTaskBarIcon(self)
         self.Centre()
         self.Bind(wx.EVT_CLOSE, self.OnClose)
 
     def OnStart(self, event):
+        P.stop()
+        W.stop()
+        c.stop()
+        time.sleep(1)
         P.start()
         W.start()
         c.start()
@@ -447,11 +466,12 @@ class MyFrame(wx.Frame):
         c.stop()
 
     def OnClose(self, event):
-        P.stop()
-        W.stop()
-        c.stop()
-        self.tskic.Destroy()
-        self.Destroy()
+        self.Hide()
+        #P.stop()
+        #W.stop()
+        #c.stop()
+        #self.tskic.Destroy()
+        #self.Destroy()
 
 class MyApp(wx.App):
     def OnInit(self):
